@@ -164,6 +164,9 @@ public class EntityListener implements Listener {
         if (!(event.getEntity() instanceof LivingEntity entity) || event.getSpawner() == null)
             return;
 
+        if (!this.stackManager.isEntityStackingEnabled() && !this.stackManager.isSpawnerStackingEnabled())
+            return;
+
         if (this.stackManager.isAreaDisabled(event.getEntity().getLocation()))
             return;
 
@@ -185,6 +188,9 @@ public class EntityListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onSecondarySpawnerSpawn(CreatureSpawnEvent event) {
+        if (!this.stackManager.isEntityStackingEnabled() && !this.stackManager.isSpawnerStackingEnabled())
+            return;
+
         LivingEntity entity = event.getEntity();
         if (this.stackManager.isAreaDisabled(entity.getLocation()))
             return;

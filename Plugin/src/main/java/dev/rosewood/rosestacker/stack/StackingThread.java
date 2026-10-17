@@ -138,7 +138,9 @@ public class StackingThread implements StackingLogic, AutoCloseable {
         if (this.disabled)
             return;
 
-        NMSAdapter.getHandler().hijackRandomSource(targetWorld);
+        boolean mobStackingEnabled = this.stackManager.isEntityStackingEnabled() || this.stackManager.isSpawnerStackingEnabled();
+        if (mobStackingEnabled)
+            NMSAdapter.getHandler().hijackRandomSource(targetWorld);
 
         // Load chunk data for all stacks in the world
         for (Chunk chunk : this.targetWorld.getLoadedChunks()) {
@@ -147,7 +149,8 @@ public class StackingThread implements StackingLogic, AutoCloseable {
         }
 
         // Disable AI for all existing stacks in the target world
-        this.targetWorld.getLivingEntities().forEach(PersistentDataUtils::applyDisabledAi);
+        if (mobStackingEnabled)
+            this.targetWorld.getLivingEntities().forEach(PersistentDataUtils::applyDisabledAi);
     }
 
     private void stackEntities() {
@@ -219,14 +222,20 @@ public class StackingThread implements StackingLogic, AutoCloseable {
     }
 
     private void cleanupOrphanedEntities() {
-        for (Entity entity : this.targetWorld.getEntities()) {
+        boolean entityStackingEnabled = this.stackManager.isEntityStackingEnabled();
+        boolean itemStackingEnabled = this.stackManager.isItemStackingEnabled();
+        if (!entityStackingEnabled && !itemStackingEnabled)
+            return;
+
+        Collection<? extends Entity> entities = entityStackingEnabled ? this.targetWorld.getEntities() : this.targetWorld.getEntitiesByClass(Item.class);
+        for (Entity entity : entities) {
             if (this.isRemoved(entity))
                 continue;
 
-            if (entity instanceof LivingEntity livingEntity && entity.getType() != EntityType.ARMOR_STAND && entity.getType() != EntityType.PLAYER && !this.isEntityStacked(livingEntity)) {
+            if (entityStackingEnabled && entity instanceof LivingEntity livingEntity && entity.getType() != EntityType.ARMOR_STAND && entity.getType() != EntityType.PLAYER && !this.isEntityStacked(livingEntity)) {
                 if (!this.stackManager.isAreaDisabled(entity.getLocation()))
                     this.createEntityStack(livingEntity, false);
-            } else if (entity.getType() == VersionUtils.ITEM) {
+            } else if (itemStackingEnabled && entity.getType() == VersionUtils.ITEM) {
                 Item item = (Item) entity;
                 if (!this.isItemStacked(item) && !this.stackManager.isAreaDisabled(entity.getLocation()))
                     this.createItemStack(item, false);
