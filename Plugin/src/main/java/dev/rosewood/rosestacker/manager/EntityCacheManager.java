@@ -163,18 +163,23 @@ public class EntityCacheManager extends Manager {
         synchronized (this.entityCache) {
             this.entityCache.clear();
             NMSHandler nmsHandler = NMSAdapter.getHandler();
-            for (StackingThread stackingThread : this.rosePlugin.getManager(StackManager.class).getStackingThreads().values()) {
+            StackManager stackManager = this.rosePlugin.getManager(StackManager.class);
+            boolean cacheLivingEntities = stackManager.isEntityStackingEnabled() || stackManager.isSpawnerStackingEnabled();
+            if (!cacheLivingEntities && !stackManager.isItemStackingEnabled())
+                return;
+
+            for (StackingThread stackingThread : stackManager.getStackingThreads().values()) {
                 World world = stackingThread.getTargetWorld();
-                this.addWorldEntities(world, nmsHandler.getEntities(world));
+                this.addWorldEntities(world, nmsHandler.getEntities(world), cacheLivingEntities);
             }
         }
     }
 
-    private void addWorldEntities(World world, List<Entity> worldEntities) {
+    private void addWorldEntities(World world, List<Entity> worldEntities, boolean cacheLivingEntities) {
         if (DIRECT_GETTERS) {
             for (Entity entity : worldEntities) {
                 EntityType type = entity.getType();
-                if (type != VersionUtils.ITEM && (!type.isAlive() || type == EntityType.PLAYER || type == EntityType.ARMOR_STAND))
+                if (type != VersionUtils.ITEM && (!cacheLivingEntities || !type.isAlive() || type == EntityType.PLAYER || type == EntityType.ARMOR_STAND))
                     continue;
 
                 ChunkLocation chunkLocation = new ChunkLocation(world.getName(), (int) entity.getX() >> 4, (int) entity.getY() >> 4, (int) entity.getZ() >> 4);
@@ -185,7 +190,7 @@ public class EntityCacheManager extends Manager {
             Location location = new Location(world, 0, 0, 0);
             for (Entity entity : worldEntities) {
                 EntityType type = entity.getType();
-                if (type != VersionUtils.ITEM && (!type.isAlive() || type == EntityType.PLAYER || type == EntityType.ARMOR_STAND))
+                if (type != VersionUtils.ITEM && (!cacheLivingEntities || !type.isAlive() || type == EntityType.PLAYER || type == EntityType.ARMOR_STAND))
                     continue;
 
                 entity.getLocation(location); // re-use location object to dump positions so we aren't constantly remaking Location objects

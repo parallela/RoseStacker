@@ -24,9 +24,10 @@ public class EntitiesLoadListener implements Listener {
         if (stackManager.isWorldDisabled(event.getWorld()))
             return;
 
-        for (Entity entity : event.getEntities())
-            if (entity instanceof LivingEntity livingEntity && !stackManager.isAreaDisabled(livingEntity.getLocation()))
-                PersistentDataUtils.applyDisabledAi(livingEntity);
+        if (stackManager.isEntityStackingEnabled() || stackManager.isSpawnerStackingEnabled())
+            for (Entity entity : event.getEntities())
+                if (entity instanceof LivingEntity livingEntity && !stackManager.isAreaDisabled(livingEntity.getLocation()))
+                    PersistentDataUtils.applyDisabledAi(livingEntity);
 
         this.rosePlugin.getManager(StackManager.class).loadChunkEntities(event.getEntities());
     }

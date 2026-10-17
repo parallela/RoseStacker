@@ -1,0 +1,17 @@
+unstack-frequency: -1
+global-entity-settings:
+  stacking-enabled: false
+  display-tags: false
+global-item-settings:
+  stacking-enabled: true
+  display-tags: true
+global-block-settings:
+  stacking-enabled: false
+global-spawner-settings:
+  stacking-enabled: false
+  disable-mob-ai: false
+  disable-attacking: false
+dynamic-tag-settings:
+  entity-dynamic-tag-view-range-enabled: false
+  item-dynamic-tag-view-range-enabled: true
+  item-dynamic-tag-view-range-wall-detection-enabled: false
